@@ -1,0 +1,2 @@
+C:\Users\nelson.vergel\OneDrive - Creative Realities Inc\Documents\QADevelopment\TV_simulator\bin\Release\net9.0-windows\win-x64\publish\TVSimulator.pdb
+C:\Users\nelson.vergel\OneDrive - Creative Realities Inc\Documents\QADevelopment\TV_simulator\bin\Release\net9.0-windows\win-x64\publish\TVSimulator.exe

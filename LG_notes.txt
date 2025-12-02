@@ -1,0 +1,70 @@
+LG transmission samples:
+kc 01 09
+ka 01 01 //set power on
+kc 01 09 //set ratio scan
+kc 01 FF //query aspect ratio
+xb 01 FF //query input 
+kf 01 FF //query volume
+km 01 FF  // query lock (FF,00 or 01)
+
+LG 32LV340C 
+  Connection: Baud:9600bps Data:8bits Parity:None  StopBit:1bit CommunicationCode:ASCII code  *Use a crossed (reversed) cable
+  
+SetId = 1-99 if if value is 0, controls every connected set, in hex
+[Cr] = 0x0D
+[ ]  = 0x20
+[command1][command2][ ][SetId][ ][Data][Cr]
+[OK] = 0x4F 0x4B   //this is for Ack
+[NG] = 0x4E 0x47   //this is for Ack
+[x]  = 0x78
+[k]  = 0x6B
+[a]  = 0x61
+[b]  = 0x62
+[e]  = 0x65
+[f]  = 0x66
+[F]  = 0x46
+[0]  = 0x30
+[1]  = 0x31
+
+Transmission: [k][a][ ][SetID][ ][FF][Cr]  //query power
+Ack-good    : [a][ ][SetID][ ][OK][Data][x]  
+Ack-bad     : [a][ ][SetID][ ][NG][Data][x]  
+
+Transmission: [k][a][ ][01][ ][00][cr] //power off
+Ack-good    : [a][ ][SetId][ ][OK][Data][x]
+ack-error   : [a][ ][SetId][ ][NG][Data][x]
+
+Transmission: [k][a][ ][01][ ][01][cr] //power on
+Ack-good    : [a][ ][SetId][ ][OK][Data][x]
+ack-error   : [a][ ][SetId][ ][NG][Data][x]
+
+
+Transmission: kc 01 09 //aspect ratio 01:normal 4:3 | 02:Wide 16:9 | 04: zoom | 05: zoom2 | 06: set by program/original | 07: 14:9 | 09: scan | 0B:full wide | 10-1F: cinema | 0c: 21:9
+Ack-good    : [c][ ][setId][ ][OK][Data][x]
+Ack-error   : [c][ ][setId][ ][NG][Data][x]
+
+Tranmission : [x][b][ ][01][ ][FF][Cr]   //query input   90:HDMI1 | 91:HDMI2 | 92:HDMI3 | 93:HDMI4 | 40:Component1 | 41:Component2
+Ack         : [b][ ][SetID][ ][OK/NG][Data][x]
+
+Tranmission : [x][b][ ]   //input select  90:HDMI1 | 91:HDMI2 | 92:HDMI3 | 93:HDMI4 | 40:Component1 | 41:Component2
+Ack         : [b][ ][SetID][ ][OK/NG][Data][x]
+
+
+Transmission: [k][f][ ][01][ ][FF][Cr]  //query volume
+              [k][f][ ][01][ ][Data][Cr]  
+Ack         : [f][ ][SetID][ok/NG][Data][x]
+
+
+Transmission: [k][m][ ][01][ ][FF][Cr] //query lock
+              [k][m][ ][01][ ][Data][Cr] // 00=lock off | 01=lock on
+Ack         : [m][ ][01][ ][OK/NG][Data][x]
+
+
+Transmission: [k][e][ ][SetID][ ][Data][Cr]  //	00:VolumeMuteOn | 01:VolumeMuteOff		  
+Ack         : [e][ ][SetID][OK/NG][Data][x]
+
+
+
+abstract class
+make a class for each TV
+			  
