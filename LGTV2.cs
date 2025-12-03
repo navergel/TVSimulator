@@ -790,13 +790,13 @@ namespace TVSimulator
 
 
 
-                    byte[] setBytes = { data[3], data[4] };
+                    /*byte[] setBytes = { data[3], data[4] };
                     string setBytesStr = Encoding.ASCII.GetString(setBytes);
                     int msgSetId = int.Parse(setBytesStr);
 
                     if (msgSetId == this.tvId || msgSetId == 0)
-                    {
-                        Console.WriteLine("nv processIncoming()dataLength9: matching setId");
+                    {*/
+                     //   Console.WriteLine("nv processIncoming()dataLength9: matching setId");
                         if (command1 == 0x6B && command2 == 0x61) //ka
                         {
                             return PowerRequest(data);
@@ -841,13 +841,13 @@ namespace TVSimulator
 
                         }
 
-                    }
+                    /*}
                     else
                     {
                         Console.WriteLine("processIncoming()dataLength9: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
                         // wrong setId, return error
                         return ErrorResponse(data, "Error:Wrong setId");
-                    }
+                    }*/
 
                 }
                 catch (Exception ex)
@@ -879,9 +879,9 @@ namespace TVSimulator
                     string setBytesStr = Encoding.ASCII.GetString(setBytes);
                     int msgSetId = int.Parse(setBytesStr);
 
-                    if (msgSetId == this.tvId || msgSetId == 0)
+                    /*if (msgSetId == this.tvId || msgSetId == 0)
                     {
-                        Console.WriteLine("nv processIncoming()dataLength12: matching setId");
+                        Console.WriteLine("nv processIncoming()dataLength12: matching setId"); */
                         if (command1 == 0x73 && command2 == 0x6E && command3 == 0x38 && command4 == 0x62) //s,n,8b
                         {
                             return OPSRequest(data);
@@ -894,13 +894,13 @@ namespace TVSimulator
 
                         }
 
-                    }
+                    /*}
                     else
                     {
                         Console.WriteLine("processIncoming()dataLength12: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
                         // wrong setId, return error
                         return ErrorResponse(data, "Error:Wrong setId");
-                    }
+                    } */
 
                 }
                 catch (Exception ex)
@@ -955,32 +955,20 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             //Console.WriteLine("power message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query power request
+            byte[] setBytes = { data[3], data[4] };
+                    string setBytesStr = Encoding.ASCII.GetString(setBytes);
+                    int msgSetId = int.Parse(setBytesStr);
 
-            if ((dataStr.Equals("FF")))
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("power status query");
-                string powerStatus = this.GetPower();
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query power request
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)powerStatus[0],
-                    (byte)powerStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set power request
-            else
-            {
-                Console.WriteLine("power set request");
-                string powerData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-
-                if (SetPower(powerData))
+                if ((dataStr.Equals("FF")))
                 {
-                    string powerStatus = GetPower();
+                    Console.WriteLine("power status query");
+                    string powerStatus = this.GetPower();
+
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
@@ -990,13 +978,36 @@ namespace TVSimulator
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-                }
+                } // set power request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported power request");
+                    Console.WriteLine("power set request");
+                    string powerData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+
+                    if (SetPower(powerData))
+                    {
+                        string powerStatus = GetPower();
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)powerStatus[0],
+                            (byte)powerStatus[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported power request");
+                    }
                 }
-            }
+            } else {
+				Console.WriteLine("PowerRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "Power Request Error:Wrong setId");
+			}
 
             return (responseList.ToArray(), "Power Request");
         }
@@ -1018,31 +1029,20 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             //Console.WriteLine("lock message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query lock request
+            
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-            if ((dataStr.Equals("FF")))
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("lock status query");
-                string lockStatus = this.GetLock();
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query lock request
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)lockStatus[0],
-                    (byte)lockStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set lock request
-            else
-            {
-                Console.WriteLine("lock set request");
-                string lockData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-                if (SetLock(lockData))
+                if ((dataStr.Equals("FF")))
                 {
-                    string lockStatus = GetLock();
+                    Console.WriteLine("lock status query");
+                    string lockStatus = this.GetLock();
 
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
@@ -1053,13 +1053,37 @@ namespace TVSimulator
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-                }
+                } // set lock request
                 else
                 {
+                    Console.WriteLine("lock set request");
+                    string lockData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                    if (SetLock(lockData))
+                    {
+                        string lockStatus = GetLock();
 
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported lock request");
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)lockStatus[0],
+                            (byte)lockStatus[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported lock request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("LockRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "LockRequest-Error:Wrong setId");
             }
 
             return (responseList.ToArray(), "Lock Request");
@@ -1082,47 +1106,59 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             //Console.WriteLine("mute message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query mute request
-            //Console.WriteLine("dataStr: " + dataStr);
-            if ((dataStr.Equals("FF")))
-            {
-                Console.WriteLine("mute status query");
-                string muteStatus = this.GetMute();
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)muteStatus[0],
-                    (byte)muteStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set power request
-            else
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("mute set request");
-                string muteData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-                if (SetMute(muteData))
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query mute request
+                //Console.WriteLine("dataStr: " + dataStr);
+                if ((dataStr.Equals("FF")))
                 {
+                    Console.WriteLine("mute status query");
+                    string muteStatus = this.GetMute();
 
-                    string MuteStatus = this.GetMute();
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
                         0x4B, // "K"
-                        (byte)MuteStatus[0],
-                        (byte)MuteStatus[1],
+                        (byte)muteStatus[0],
+                        (byte)muteStatus[1], // Data
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-                }
+                } // set power request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported mute request");
+                    Console.WriteLine("mute set request");
+                    string muteData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                    if (SetMute(muteData))
+                    {
+
+                        string MuteStatus = this.GetMute();
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)MuteStatus[0],
+                            (byte)MuteStatus[1],
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported mute request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("MuteRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "MuteRequest-Error:Wrong setId"); 
             }
 
             return (responseList.ToArray(), "Mute Request");
@@ -1145,77 +1181,90 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             //Console.WriteLine("volume message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query volume request
+            
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-            if ((dataStr.Equals("FF")))
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("volume status query");
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query volume request
 
-                if (this.volume < 10)
+                if ((dataStr.Equals("FF")))
                 {
-                    // [OK/NG][Data][x]
-                    byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    0x30, // padding with 0
-                    (byte)this.volume.ToString("X2")[1],
-                    0x78 // 'x'
-                    };
-                    responseList.AddRange(bytesToAdd);
-                }
-                else
-                {
-                    // [OK/NG][Data][x]
-                    byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)this.volume.ToString("X2")[0],
-                    (byte)this.volume.ToString("X2")[1],
-                    0x78 // 'x'
-                    };
-                    responseList.AddRange(bytesToAdd);
-                }
+                    Console.WriteLine("volume status query");
 
-            } // set volume request
-            else
-            {
-                int volumeData = Convert.ToInt32(dataStr, 16);
-                Console.WriteLine("volume set request: " + volumeData);
-                if (SetVolume(volumeData))
-                {
-                    int volumeStatus = GetVolume();
-                    if (volumeStatus < 10)
+                    if (this.volume < 10)
                     {
                         // [OK/NG][Data][x]
                         byte[] bytesToAdd = {
-                            0x4F, // "O"
-                            0x4B, // "K"
-                            0x30, // padding with 0
-                            (byte)volumeStatus.ToString("X2")[1],
-                            0x78 // 'x'
+                        0x4F, // "O"
+                        0x4B, // "K"
+                        0x30, // padding with 0
+                        (byte)this.volume.ToString("X2")[1],
+                        0x78 // 'x'
                         };
                         responseList.AddRange(bytesToAdd);
                     }
                     else
                     {
-
                         // [OK/NG][Data][x]
                         byte[] bytesToAdd = {
-                            0x4F, // "O"
-                            0x4B, // "K"
-                            (byte)volumeStatus.ToString("X2")[0],
-                            (byte)volumeStatus.ToString("X2")[1], // Data
-                            0x78 // 'x'
+                        0x4F, // "O"
+                        0x4B, // "K"
+                        (byte)this.volume.ToString("X2")[0],
+                        (byte)this.volume.ToString("X2")[1],
+                        0x78 // 'x'
                         };
                         responseList.AddRange(bytesToAdd);
                     }
-                }
+
+                } // set volume request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported volume request");
+                    int volumeData = Convert.ToInt32(dataStr, 16);
+                    Console.WriteLine("volume set request: " + volumeData);
+                    if (SetVolume(volumeData))
+                    {
+                        int volumeStatus = GetVolume();
+                        if (volumeStatus < 10)
+                        {
+                            // [OK/NG][Data][x]
+                            byte[] bytesToAdd = {
+                                0x4F, // "O"
+                                0x4B, // "K"
+                                0x30, // padding with 0
+                                (byte)volumeStatus.ToString("X2")[1],
+                                0x78 // 'x'
+                            };
+                            responseList.AddRange(bytesToAdd);
+                        }
+                        else
+                        {
+
+                            // [OK/NG][Data][x]
+                            byte[] bytesToAdd = {
+                                0x4F, // "O"
+                                0x4B, // "K"
+                                (byte)volumeStatus.ToString("X2")[0],
+                                (byte)volumeStatus.ToString("X2")[1], // Data
+                                0x78 // 'x'
+                            };
+                            responseList.AddRange(bytesToAdd);
+                        }
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported volume request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("VolumeRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "VolumeRequest-Error:Wrong setId");
             }
             return (responseList.ToArray(), "Volume Request");
         } //Volume
@@ -1237,31 +1286,21 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             //Console.WriteLine("OSD message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query OSD request
 
-            if ((dataStr.Equals("FF")))
-            {
-                Console.WriteLine("OSD status query");
-                string osdStatus = this.GetOSD();
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)osdStatus[0],
-                    (byte)osdStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set osd request
-            else
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("osd set request");
-                string osdData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-                if (SetOSD(osdData))
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query OSD request
+
+                if ((dataStr.Equals("FF")))
                 {
-                    string osdStatus = GetOSD();
+                    Console.WriteLine("OSD status query");
+                    string osdStatus = this.GetOSD();
+
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
@@ -1271,12 +1310,35 @@ namespace TVSimulator
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-                }
+                } // set osd request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported OSD request");
+                    Console.WriteLine("osd set request");
+                    string osdData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                    if (SetOSD(osdData))
+                    {
+                        string osdStatus = GetOSD();
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)osdStatus[0],
+                            (byte)osdStatus[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported OSD request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("OSDRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "OSDRequest-Error:Wrong setId");
             }
 
             return (responseList.ToArray(), "OSD Request");
@@ -1299,30 +1361,19 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
 
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query Input request
-            if ((dataStr.Equals("FF")))
-            {
-                Console.WriteLine("input query");
-                string inputStatus = GetInputNameCode();
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)inputStatus[0],
-                    (byte)inputStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set input request
-            else
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("input set request");
-                string inputData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-                if (SetInput(inputData))
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query Input request
+                if ((dataStr.Equals("FF")))
                 {
+                    Console.WriteLine("input query");
                     string inputStatus = GetInputNameCode();
+
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
@@ -1332,13 +1383,35 @@ namespace TVSimulator
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-
-                }
+                } // set input request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported input request");
+                    Console.WriteLine("input set request");
+                    string inputData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                    if (SetInput(inputData))
+                    {
+                        string inputStatus = GetInputNameCode();
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)inputStatus[0],
+                            (byte)inputStatus[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported input request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("InputRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "InputRequest-Error:Wrong setId");
             }
             return (responseList.ToArray(), "Input Request");
         } //input request
@@ -1360,17 +1433,50 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             Console.WriteLine("Reset message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query Reset request
-            //Console.WriteLine("dataStr: " + dataStr);
-            if (dataStr.Equals("00")) //picture reset
-            {
-                //Console.WriteLine("nv picture reset request");
-                string inputStatus = "90"; //hdmi
 
-                if (SetInput(inputStatus))
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
+
+            if (msgSetId == this.tvId || msgSetId == 0)
+            {
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query Reset request
+                //Console.WriteLine("dataStr: " + dataStr);
+                if (dataStr.Equals("00")) //picture reset
                 {
+                    //Console.WriteLine("nv picture reset request");
+                    string inputStatus = "90"; //hdmi
+
+                    if (SetInput(inputStatus))
+                    {
                     
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)dataStr[0],
+                            (byte)dataStr[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Failed to reset picture");
+                    }
+
+                }
+                else if (dataStr.Equals("01")) //factory reset
+                {
+                    //Console.WriteLine("nv factory reset request");
+
+                    SetPower("01"); //power on
+                    SetInput("90");  //hdmi1
+                    SetOSD("00");  //OSD off
+                    SetVolume(0);
+                    SetMute("01"); //mute off
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
@@ -1379,40 +1485,19 @@ namespace TVSimulator
                         (byte)dataStr[1], // Data
                         0x78 // 'x'
                     };
+
                     responseList.AddRange(bytesToAdd);
                 }
                 else
                 {
                     // wrong data, return error
-                    return ErrorResponse(data, "Error:Failed to reset picture");
+                    return ErrorResponse(data, "Error:Unsupported reset request");
                 }
-
-            }
-            else if (dataStr.Equals("01")) //factory reset
+            } else
             {
-                //Console.WriteLine("nv factory reset request");
-
-                SetPower("01"); //power on
-                SetInput("90");  //hdmi1
-                SetOSD("00");  //OSD off
-                SetVolume(0);
-                SetMute("01"); //mute off
-
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)dataStr[0],
-                    (byte)dataStr[1], // Data
-                    0x78 // 'x'
-                };
-
-                responseList.AddRange(bytesToAdd);
-            }
-            else
-            {
-                // wrong data, return error
-                return ErrorResponse(data, "Error:Unsupported reset request");
+                Console.WriteLine("ResetRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "ResetRequest-Error:Wrong setId"); 
             }
 
             return (responseList.ToArray(), "Reset Request");
@@ -1435,31 +1520,20 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
             Console.WriteLine("aspect ratio message");
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query aspect ratio request
-            if ((dataStr.Equals("FF")))
-            {
-                Console.WriteLine("aspect ratio query");
-                string aspectRatioStatus = GetAspectRatioCode();
+            
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    (byte)aspectRatioStatus[0],
-                    (byte)aspectRatioStatus[1], // Data
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set aspect ratio request
-            else
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("aspect ratio set request");
-                string aspectData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-                if (this.SetAspectRatio(aspectData))
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query aspect ratio request
+                if ((dataStr.Equals("FF")))
                 {
-                    UpdateAspectRatio(); //update front end
+                    Console.WriteLine("aspect ratio query");
                     string aspectRatioStatus = GetAspectRatioCode();
+
                     // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
@@ -1469,13 +1543,37 @@ namespace TVSimulator
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-
-                }
+                } // set aspect ratio request
                 else
                 {
-                    // wrong data, return error
-                    return ErrorResponse(data, "Error:Unsupported aspect ratio request");
+                    Console.WriteLine("aspect ratio set request");
+                    string aspectData = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                    if (this.SetAspectRatio(aspectData))
+                    {
+                        UpdateAspectRatio(); //update front end
+                        string aspectRatioStatus = GetAspectRatioCode();
+                        // [OK/NG][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            (byte)aspectRatioStatus[0],
+                            (byte)aspectRatioStatus[1], // Data
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+
+                    }
+                    else
+                    {
+                        // wrong data, return error
+                        return ErrorResponse(data, "Error:Unsupported aspect ratio request");
+                    }
                 }
+            } else
+            {
+                Console.WriteLine("AspectRatioRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "AspectRatioRequest-Error:Wrong setId");
             }
             return (responseList.ToArray(), "Aspect Ratio Request");
         } //AspectRatio request
@@ -1498,35 +1596,47 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
 
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
-            // query serial number request
-            if (dataStr.Equals("FF"))
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
+
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("get serialnumber query");
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 6, 2);
+                // query serial number request
+                if (dataStr.Equals("FF"))
+                {
+                    Console.WriteLine("get serialnumber query");
 
-                //TODO: not sure exactly how many bytes or sample of a TV SerialNumber, just send nv for now
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    0x6E, // "n" (Data)
-                    0x76, // "v" (Data)
-                    0x74, // "t" (Data)
-                    0x76, // "v" (Data)
-                    0x30, // "0" (Data)
-                    0x30, // "0" (Data)
-                    0x31, // "1" (Data)
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } 
-            else
+                    //TODO: not sure exactly how many bytes or sample of a TV SerialNumber, just send nv for now
+                    // [OK/NG][Data][x]
+                    byte[] bytesToAdd = {
+                        0x4F, // "O"
+                        0x4B, // "K"
+                        0x6E, // "n" (Data)
+                        0x76, // "v" (Data)
+                        0x74, // "t" (Data)
+                        0x76, // "v" (Data)
+                        0x30, // "0" (Data)
+                        0x30, // "0" (Data)
+                        0x31, // "1" (Data)
+                        0x78 // 'x'
+                    };
+                    responseList.AddRange(bytesToAdd);
+                } 
+                else
+                {
+                    Console.WriteLine("invalid serialnumber request");
+
+                    // wrong data, return error
+                    return ErrorResponse(data, "Error:Unsupported SerialNumber request");
+
+                }
+            } else
             {
-                Console.WriteLine("invalid serialnumber request");
-
-                // wrong data, return error
-                return ErrorResponse(data, "Error:Unsupported SerialNumber request");
-
+                Console.WriteLine("SerialNumberRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "SerialNumberRequest-Error:Wrong setId");
             }
             return (responseList.ToArray(), "SerialNumber Request");
         }
@@ -1552,62 +1662,75 @@ namespace TVSimulator
             responseList.Add(data[4]);
             responseList.Add(0x20); //space
 
-            string dataStr = System.Text.Encoding.ASCII.GetString(data, 9, 2);
-            //Console.WriteLine("OPS message data: " + dataStr );
-            // query OPS request
-            if ((dataStr.Equals("FF")))
-            {
-                Console.WriteLine("get OPS query");
-                string OPSStatus = this.GetOPS();
+            byte[] setBytes = { data[3], data[4] };
+            string setBytesStr = Encoding.ASCII.GetString(setBytes);
+            int msgSetId = int.Parse(setBytesStr);
 
-
-                // [OK/NG][Data][x]
-                byte[] bytesToAdd = {
-                    0x4F, // "O"
-                    0x4B, // "K"
-                    command3,  //8
-                    command4,  //b
-                    (byte)OPSStatus[0],
-                    (byte)OPSStatus[1], 
-                    0x78 // 'x'
-                };
-                responseList.AddRange(bytesToAdd);
-            } // set OPS request. Valid values: 00 - disabled, 01 - sync(On), 02 - sync(On/Off)
-            else
+            if (msgSetId == this.tvId || msgSetId == 0)
             {
-                Console.WriteLine("set OPS request");
-                string OPSStatus = System.Text.Encoding.ASCII.GetString(data, 9, 2);
-                if (this.SetOPS(OPSStatus))
+                string dataStr = System.Text.Encoding.ASCII.GetString(data, 9, 2);
+                //Console.WriteLine("OPS message data: " + dataStr );
+                // query OPS request
+                if ((dataStr.Equals("FF")))
                 {
-                    // [OK/NG][command3][command4][Data][x]
+                    Console.WriteLine("get OPS query");
+                    string OPSStatus = this.GetOPS();
+
+
+                    // [OK/NG][Data][x]
                     byte[] bytesToAdd = {
                         0x4F, // "O"
                         0x4B, // "K"
-                        command3, // "8"
-                        command4, // "b"
-                        data[9],  //  (Data)
-                        data[10], //  (Data)
+                        command3,  //8
+                        command4,  //b
+                        (byte)OPSStatus[0],
+                        (byte)OPSStatus[1], 
                         0x78 // 'x'
                     };
                     responseList.AddRange(bytesToAdd);
-                    UpdateOPSCombo();
-                }
+                } // set OPS request. Valid values: 00 - disabled, 01 - sync(On), 02 - sync(On/Off)
                 else
                 {
-                    // failed to set OPS, return error
-                    // [OK/NG][command3][command4][Data][x]
-                    byte[] bytesToAdd = {
-                        0x4E, // "N"
-                        0x47, // "G"
-                        command3, // "8"
-                        command4, // "b"
-                        data[9],  //  (Data)
-                        data[10], //  (Data)
-                        0x78 // 'x'
-                    };
-                    responseList.AddRange(bytesToAdd);
-                    return (responseList.ToArray(), "Error:OPS request");
+                    Console.WriteLine("set OPS request");
+                    string OPSStatus = System.Text.Encoding.ASCII.GetString(data, 9, 2);
+                    if (this.SetOPS(OPSStatus))
+                    {
+                        // [OK/NG][command3][command4][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4F, // "O"
+                            0x4B, // "K"
+                            command3, // "8"
+                            command4, // "b"
+                            data[9],  //  (Data)
+                            data[10], //  (Data)
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                        UpdateOPSCombo();
+                    }
+                    else
+                    {
+                        // failed to set OPS, return error
+                        // [OK/NG][command3][command4][Data][x]
+                        byte[] bytesToAdd = {
+                            0x4E, // "N"
+                            0x47, // "G"
+                            command3, // "8"
+                            command4, // "b"
+                            data[9],  //  (Data)
+                            data[10], //  (Data)
+                            0x78 // 'x'
+                        };
+                        responseList.AddRange(bytesToAdd);
+                        return (responseList.ToArray(), "Error:OPS request");
+                    }
                 }
+
+            } else
+            {
+                Console.WriteLine("OPSRequest: mismatching reqSetId:"+msgSetId+" setId:"+this.tvId);
+                // wrong setId, return error
+                return ErrorResponse(data, "OPSRequest-Error:Wrong setId");
             }
             
             return (responseList.ToArray(), "OPS Request");
