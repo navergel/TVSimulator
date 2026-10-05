@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO.Ports;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Windows.Forms;
@@ -49,8 +50,23 @@ namespace TVSimulator
         private void InitializeComponent()
         {
             Text = "TV Simulator";
-            Size = new Size(600, 750);
+            Size = new Size(600, 780);
             StartPosition = FormStartPosition.CenterScreen;
+
+            // Menu bar
+            var menuStrip = new MenuStrip();
+            var helpMenu = new ToolStripMenuItem("Help");
+            var aboutMenuItem = new ToolStripMenuItem("About");
+            aboutMenuItem.Click += AboutMenuItem_Click;
+            helpMenu.DropDownItems.Add(aboutMenuItem);
+            menuStrip.Items.Add(helpMenu);
+
+            // Container that holds all existing panels below the menu bar,
+            // so panel coordinates stay relative and don't overlap the menu.
+            var contentPanel = new Panel
+            {
+                Dock = DockStyle.Fill
+            };
 
             // Serial Settings Panel
             var serialPanel = new GroupBox
@@ -314,8 +330,36 @@ namespace TVSimulator
             };
 
             messagingPanel.Controls.AddRange(new Control[] { statusLabel, receiveLabel, sentLabel, msgLabel });
-            
-            Controls.AddRange(new Control[] { serialPanel, tvPanel, controlPanel, messagingPanel });
+
+            contentPanel.Controls.AddRange(new Control[] { serialPanel, tvPanel, controlPanel, messagingPanel });
+
+            // Add content first, then dock the menu on top. MainMenuStrip wires
+            // up the menu so docked children lay out below it.
+            Controls.Add(contentPanel);
+            Controls.Add(menuStrip);
+            MainMenuStrip = menuStrip;
+        }
+
+        private void AboutMenuItem_Click(object sender, EventArgs e)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            string version =
+                assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+                ?? assembly.GetName().Version?.ToString()
+                ?? "Unknown";
+
+            // Strip any build metadata suffix (e.g. "1.0.0+abc123") for display.
+            int plusIndex = version.IndexOf('+');
+            if (plusIndex >= 0)
+            {
+                version = version.Substring(0, plusIndex);
+            }
+
+            MessageBox.Show(
+                $"TV Simulator\r\nVersion {version}",
+                "About TV Simulator",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         private void DisableTVControls()
@@ -714,7 +758,7 @@ namespace TVSimulator
                 
                 if (receiveLabel.InvokeRequired)
                 {
-                    receiveLabel.Invoke(new MethodInvoker(() => ProcessMessage(buffer)));
+                    receiveLabel.Invoke(new System.Windows.Forms.MethodInvoker(() => ProcessMessage(buffer)));
                 }
                 else
                 {
