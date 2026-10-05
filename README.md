@@ -1,5 +1,7 @@
 Visual Studio C#
 
+This application was created to test ReflectView players serial control to displays.  As most supported TV are no longer available, the TV reference manuals were used to simulate the required raw data via serial connections to "control" the TV.  Such controls can be: power, input control, volume, mute, aspect ratio to name a few.  The user interface allows the user to simulate controls such as powering off the TV, which would then be expected to be turned back on by the rvplayer via serial commands.
+
 To build and run:
 
 1. Install .NET 6 SDK (if not already installed):
